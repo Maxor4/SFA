@@ -13,7 +13,9 @@ export default class WebService {
         //this.chargerTout();
     }
 
-    chargerTout() {
+    chargerTout(callback) {
+        let data = [];
+
         this.getEntites((data) => {
             let mots = data.mot,
                 categories = data.section,
@@ -21,10 +23,13 @@ export default class WebService {
                 traductions = data.traduction;
 
             this.chargerSections(categories, (data) => {
-                let vocabulaire = this.chargerMots(mots, data);
-                console.log(vocabulaire);
+                data = this.chargerMots(mots, data);
             });
-        })
+        });
+
+        return typeof callback === "function" ?
+            callback(data) :
+            null;
     }
 
     chargerMots(mots, categories) {
