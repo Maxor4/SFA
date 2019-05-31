@@ -71,21 +71,8 @@ export default class Drawer extends Component {
         super(props);
 
         this.state = {
-            langue:'statut',
-            langues : [
-                {
-                    id : 1,
-                    libelle: 'Anglais'
-                },
-                {
-                    id : 2,
-                    libelle: 'Allemand'
-                },
-                {
-                    id : 3,
-                    libelle: 'Grec'
-                }
-            ]
+            langue: 25,
+            langues : []
         };
 
         this.props.navigator.setStyle({
@@ -100,8 +87,6 @@ export default class Drawer extends Component {
     chargerLangues(){
         ws.getLangues((data) => {
             let langues = WebService.arrayFromHashes(data);
-
-            console.log(langues);
 
             this.setState({
                 langues: langues
