@@ -11,15 +11,13 @@ import {
     View,
 } from "react-native";
 import Accordion from "react-native-collapsible/Accordion";
-import Collapsible from "react-native-collapsible";
 
 import Couleurs from '../scripts/Couleurs';
 import WebService from '../scripts/WebService';
 
 import {ws} from '../index.js';
 
-var width = Dimensions.get('window').width,
-    height = Dimensions.get('window').height;
+var width = Dimensions.get('window').width;
 
 export default class Main extends Component {
 
