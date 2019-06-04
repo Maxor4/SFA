@@ -123,7 +123,6 @@ export default class Main extends Component {
         } else {
             ws.getAllMots((mots) => {
                 if (text !== null && text.length > 0) {
-                    console.log('gfdghhdf');
                     let productFilter = {},
                         regex = text.toLowerCase();
 
@@ -131,7 +130,6 @@ export default class Main extends Component {
                         Object.keys(mots).forEach((key) => {
 
                             if (mots[key].libelle.toLowerCase().includes(regex)) {
-                                console.log('ici');
                                 productFilter[key] = mots[key];
                                 present = true;
                             }
