@@ -4,11 +4,14 @@ import {
     Dimensions,
     FlatList,
     Platform,
+    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
+import Accordion from "react-native-collapsible/Accordion";
+
 import Couleurs from '../scripts/Couleurs';
 import WebService from '../scripts/WebService';
 
@@ -31,12 +34,12 @@ export default class Main extends Component {
 
         this.state = {
             recherche: false,
-            refreshing: false,
             listeRecherche: [],
             listeData: [],
             resultat: true,
             derniers: true,
             categorie : null,
+            activeSections: [],
         };
 
         this.props.navigator.setOnNavigatorEvent(this.DeepLinkEvent.bind(this));
@@ -174,6 +177,31 @@ export default class Main extends Component {
         }
     }
 
+    setSection(section) {
+        this.setState({
+            activeSections: section,
+        });
+    }
+
+    render() {
+        return (
+            <ScrollView contentContainerStyle={styles.container}>
+                <Accordion
+                    //Obligé de le mettre dans une scrollView, bug de la librairie, ne peut pas scroll dans l'accordion. cf. https://github.com/oblador/react-native-collapsible/issues/170
+                    style={styles.container}
+                    sectionContainerStyle={{marginBottom: 28}}
+                    activeSections={this.state.activeSections}
+                    sections={this.state.listeData}
+                    touchableComponent={TouchableOpacity}
+                    renderHeader={this.renderSectionTitle.bind(this)}
+                    renderContent={this.renderContent.bind(this)}
+                    duration={200}
+                    onChange={this.setSection.bind(this)}
+                />
+            </ScrollView>
+        );
+    }
+
     renderItem(item) {
         return (
             <TouchableOpacity style={styles.item}>
@@ -182,26 +210,24 @@ export default class Main extends Component {
         );
     }
 
-    render() {
-        let test = true;
-        if (test) {
-            return (
-                <FlatList
-                    contentContainerStyle={styles.liste}
-                    data={this.state.listeData}
-                    extraData={this.state} //Permet de rerender à chaque textInput et eviter le textinput non modifiable
-                    renderItem={({item}) => this.renderItem(item)}
-                    keyExtractor={item => item.id.toString()}
-                />
-            )
-        }
-
+    renderSectionTitle(section) {
         return (
-            <View style={styles.container}>
-                <Text style={styles.welcome}>Welcome to hgfhfgfg Native!</Text>
-                <Text style={styles.instructions}>To get started, edit App.js</Text>
-                <Text style={styles.instructions}>{instructions}</Text>
-            </View>
+            <Text style={[styles.title, styles.titleText]}>
+                {section.libelle}
+            </Text>
+        );
+    }
+
+    renderContent(section) {
+        let liste = WebService.arrayFromHashes(section.filles);
+        return (
+            <FlatList
+                contentContainerStyle={styles.liste}
+                data={liste}
+                extraData={this.state} //Permet de rerender à chaque textInput et eviter le textinput non modifiable
+                renderItem={({item}) => this.renderItem(item)}
+                keyExtractor={item => item.id.toString()}
+            />
         );
     }
 }
@@ -211,32 +237,40 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F5FCFF',
+        backgroundColor: Couleurs.lightGray
     },
-    welcome: {
-        fontSize: 20,
-        textAlign: 'center',
-        margin: 10,
-    },
-    instructions: {
-        textAlign: 'center',
-        color: '#333333',
-        marginBottom: 5,
-    },
-    liste: {
+    accordion: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: Couleurs.lightGray
     },
-    item: {
+    liste: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    title: {
         width: width*0.85,
         borderRadius : 20,
         backgroundColor: Couleurs.blanc,
         alignItems: 'center',
         justifyContent: 'center',
-        height: 40,
-        marginBottom: 28,
+        marginBottom: 10,
+        paddingVertical: 5
+    },
+    titleText: {
+        textAlign: 'center',
+        fontSize: 20
+    },
+    item: {
+        width: width*0.65,
+        borderRadius : 10,
+        backgroundColor: Couleurs.blanc,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 15,
+        paddingVertical: 3
     },
     itemText: {
         textAlign: 'center',
