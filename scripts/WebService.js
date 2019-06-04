@@ -23,13 +23,11 @@ export default class WebService {
                 traductions = data.traduction;
 
             this.chargerSections(categories, (liste) => {
-                data = (liste);
+                return typeof callback === "function" ?
+                    callback(liste) :
+                    null;
             });
         });
-
-        return typeof callback === "function" ?
-            callback(data) :
-            null;
     }
 
     chargerMots(mots, categories) {

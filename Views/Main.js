@@ -1,9 +1,12 @@
 import React, {Component} from 'react';
 import {
     AsyncStorage,
+    Dimensions,
+    FlatList,
+    Platform,
     StyleSheet,
     Text,
-    Vibration,
+    TouchableOpacity,
     View,
 } from "react-native";
 import Couleurs from '../scripts/Couleurs';
@@ -18,6 +21,9 @@ const instructions = Platform.select({
         'Shake or press menu button for dev menu',
 });
 
+var width = Dimensions.get('window').width,
+    height = Dimensions.get('window').height;
+
 export default class Main extends Component {
 
     constructor(props) {
@@ -27,13 +33,13 @@ export default class Main extends Component {
             recherche: false,
             refreshing: false,
             listeRecherche: [],
+            listeData: [],
             resultat: true,
             derniers: true,
             categorie : null,
         };
 
         this.props.navigator.setOnNavigatorEvent(this.DeepLinkEvent.bind(this));
-        this.chargerListe(false);
     }
 
     DeepLinkEvent(event) {
@@ -74,7 +80,7 @@ export default class Main extends Component {
         } else {
             switch (event.id){
                 case "didAppear":
-                    this.chargerListe();
+                    this.chargerListe(true);
                     this.setState({
                         recherche: false,
                     });
@@ -155,21 +161,41 @@ export default class Main extends Component {
     chargerListe(categories) {
         if(categories){
             ws.chargerTout((data) => {
-                console.log(data);
                 this.setState({
-                    listeRecherche: data
+                    listeData: WebService.arrayFromHashes(data)
                 });
             })
         } else {
             ws.getMots(this.state.categorie, (liste) =>{
                 this.setState({
-                    listeRecherche: liste
+                    listeData: WebService.arrayFromHashes(liste)
                 });
             })
         }
     }
 
+    renderItem(item) {
+        return (
+            <TouchableOpacity style={styles.item}>
+                <Text style={styles.itemText}>{item.libelle}</Text>
+            </TouchableOpacity>
+        );
+    }
+
     render() {
+        let test = true;
+        if (test) {
+            return (
+                <FlatList
+                    contentContainerStyle={styles.liste}
+                    data={this.state.listeData}
+                    extraData={this.state} //Permet de rerender à chaque textInput et eviter le textinput non modifiable
+                    renderItem={({item}) => this.renderItem(item)}
+                    keyExtractor={item => item.id.toString()}
+                />
+            )
+        }
+
         return (
             <View style={styles.container}>
                 <Text style={styles.welcome}>Welcome to hgfhfgfg Native!</Text>
@@ -197,4 +223,23 @@ const styles = StyleSheet.create({
         color: '#333333',
         marginBottom: 5,
     },
+    liste: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: Couleurs.lightGray
+    },
+    item: {
+        width: width*0.85,
+        borderRadius : 20,
+        backgroundColor: Couleurs.blanc,
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 40,
+        marginBottom: 28,
+    },
+    itemText: {
+        textAlign: 'center',
+        fontSize: 20
+    }
 });

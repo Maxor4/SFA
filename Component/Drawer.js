@@ -7,7 +7,8 @@
 import React, { Component} from 'react';
 import {
     Dimensions,
-    FlatList, Platform,
+    FlatList,
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
