@@ -16,13 +16,8 @@ export default class WebService {
     chargerTout(callback) {
         let data = [];
 
-        this.getEntites((data) => {
-            let mots = data.mot,
-                categories = data.section,
-                langues = data.langue,
-                traductions = data.traduction;
-
-            this.chargerSections(categories, (liste) => {
+        this.getCategories((data) => {
+            this.chargerSections(data, (liste) => {
                 return typeof callback === "function" ?
                     callback(liste) :
                     null;

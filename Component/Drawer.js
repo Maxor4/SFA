@@ -72,7 +72,7 @@ export default class Drawer extends Component {
         super(props);
 
         this.state = {
-            langue: 25,
+            langue: 32,
             langues : []
         };
 
