@@ -22,8 +22,8 @@ export default class WebService {
                 langues = data.langue,
                 traductions = data.traduction;
 
-            this.chargerSections(categories, (data) => {
-                data = this.chargerMots(mots, data);
+            this.chargerSections(categories, (liste) => {
+                data = (liste);
             });
         });
 
@@ -166,8 +166,8 @@ export default class WebService {
         this.request(this.serveurSymfony + "/lister/entites", "GET", null, callback, fallback);
     }
 
-    getMots(callback, fallback) {
-        this.request(this.serveurSymfony + "/lister/mot", "GET", null, callback, fallback);
+    getMots(id_section, callback, fallback) {
+        this.request(this.serveurSymfony + "/lister/mot/section="+id_section, "GET", null, callback, fallback);
     }
 
     getCategories(callback, fallback) {
@@ -178,7 +178,11 @@ export default class WebService {
         this.request(this.serveurSymfony + "/lister/langue", "GET", null, callback, fallback);
     }
 
-    getTraductions(callback, fallback) {
-        this.request(this.serveurSymfony + "/lister/traduction", "GET", null, callback, fallback);
+    getTraductions(id_section, id_langue, callback, fallback) {
+        this.request(this.serveurSymfony + "/lister/traduction/section="+id_section+"/langue="+id_langue, "GET", null, callback, fallback);
+    }
+
+    getTraductionsMot(id_mot, id_langue, callback, fallback) {
+        this.request(this.serveurSymfony + "/lister/traduction/mot="+id_mot+"/langue="+id_langue, "GET", null, callback, fallback);
     }
 }
