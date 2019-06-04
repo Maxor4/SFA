@@ -39,6 +39,7 @@ export default class Main extends Component {
             derniers: true,
             categorie : null,
             activeSections: [],
+            section: null,
             langue : 32,
             openId: null
         };
@@ -84,6 +85,8 @@ export default class Main extends Component {
                 case "langue" :
                     this.setState({
                         langue: payload,
+                    }, () => {
+                        this.changerLangue()
                     });
                     break;
             }
@@ -102,6 +105,25 @@ export default class Main extends Component {
                     break;
             }
         }
+    }
+
+    changerLangue(){
+        let mots = this.state.listeMots;
+
+        ws.getTraductions(this.state.section, this.state.langue, (traductions) => {
+            mots.forEach((mot) => {
+                mot.traduction = '';
+                traductions.forEach((traduction) => {
+                    if (traduction.mot.id === mot.id){
+                        mot.traduction = traduction.libelle
+                    }
+                });
+            });
+
+            this.setState({
+                listeMots: mots
+            })
+        });
     }
 
     recherche(text) {
@@ -292,6 +314,7 @@ export default class Main extends Component {
                     });
 
                     this.setState({
+                        section: section.id,
                         sections: false,
                         mots: true,
                         listeMots: mots
