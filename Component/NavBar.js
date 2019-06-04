@@ -163,9 +163,6 @@ export default class NavBar extends Component {
     }
 
     rechercheFocus() {
-        Navigation.handleDeepLink({
-            link: "recherche",
-        });
         this.setState({
             focusInput:true,
         });

@@ -1,9 +1,7 @@
 import React, {Component} from 'react';
 import {
-    AsyncStorage,
     Dimensions,
     FlatList,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -33,8 +31,6 @@ export default class Main extends Component {
             listeData: [],
             sousSections: [],
             listeMots: [],
-            resultat: true,
-            derniers: true,
             categorie : null,
             activeSections: [],
             section: null,
@@ -52,26 +48,16 @@ export default class Main extends Component {
 
             switch (parts[0]) {
 
-                case "rechercheProduit":
+                case "recherche":
                     this.recherche(payload);
                     break;
 
                 case "retourRecherche" :
                     this.setState({
                         recherche: false,
-                        resultat: true,
-                        derniers: true,
+                        sections: true
                     });
                     this.chargerListe();
-                    break;
-
-                case "recherche" :
-                    if (!this.state.recherche) {
-                        this.setState({
-                            recherche: true,
-                            derniers: true,
-                        });
-                    }
                     break;
 
                 case "clearCache" :
@@ -125,66 +111,59 @@ export default class Main extends Component {
     }
 
     recherche(text) {
-        let present = false;
+        let present = false,
+            productArray = [];
 
         if (typeof text === "undefined") {
-            this.chargerListe();
+            this.chargerListe(true);
             this.setState({
-                refreshing: false,
-                resultat: true,
-                derniers: true,
+                sections: true,
+                mots : false
             });
         } else {
-            this.setState({refreshing: true}, () => {
+            ws.getAllMots((mots) => {
+                if (text !== null && text.length > 0) {
+                    console.log('gfdghhdf');
+                    let productFilter = {},
+                        regex = text.toLowerCase();
 
-                AsyncStorage.getItem("listeProduits", (err, rechercheValue) => {
-                    const rechercheCache = JSON.parse(rechercheValue);
+                    if (mots !== null) {
+                        Object.keys(mots).forEach((key) => {
 
-                    if (text !== null && text.length > 0) {
-                        const productFilter = {},
-                            regex = text.toLowerCase();
-
-                        if (rechercheCache !== null) {
-                            Object.keys(rechercheCache).forEach((key) => {
-                                if (rechercheCache[key].libelle.toLowerCase().includes(regex) || rechercheCache[key].reference.toLowerCase().includes(regex)) {
-                                    productFilter[key] = rechercheCache[key];
-                                    present = true;
-                                }
-                            });
-                        }
-
-                        ws.rechercheProduit(text, (data) => {
-                            if (data.produits.length > 0) {
+                            if (mots[key].libelle.toLowerCase().includes(regex)) {
+                                console.log('ici');
+                                productFilter[key] = mots[key];
                                 present = true;
-                                data.produits.forEach((produit) => {
-                                    productFilter[produit.id_product+"-"+produit.id_product_attribute] = produit;
-                                });
                             }
-
-                            this.setState({
-                                refreshing: false,
-                                resultat: present,
-                                derniers: !present,
-                                listeRecherche: present ?
-                                    productFilter :
-                                    []
-                            });
-                        }, () => {
-                            this.setState({
-                                refreshing: false,
-                                resultat: present,
-                                derniers: !present,
-                            });
-                        });
-                    } else {
-                        this.setState({
-                            refreshing: false,
-                            resultat: present,
-                            derniers: !present,
                         });
                     }
-                });
-            });
+
+                    productArray = WebService.arrayFromHashes(productFilter);
+
+                    productArray.forEach((mot) => {
+                        ws.getTraductionMot(mot.id, this.state.langue, (traductions) => {
+                            mot.traduction = '';
+                            traductions.forEach((traduction) => {
+                                if (traduction.mot.id === mot.id){
+                                    mot.traduction = traduction.libelle
+                                }
+                            });
+                        });
+                    });
+
+                    this.setState({
+                        sections: false,
+                        mots: true,
+                        listeMots: productArray
+                    })
+                } else {
+                    this.chargerListe();
+                    this.setState({
+                        sections: true,
+                        mots : false
+                    });
+                }
+            })
         }
     }
 
