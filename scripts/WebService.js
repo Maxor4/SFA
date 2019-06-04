@@ -9,8 +9,6 @@ export default class WebService {
         this.navigator = null;
 
         this.serveurSymfony = Config.serveur;
-
-        this.chargerMots();
     }
 
     chargerTout(callback) {
@@ -20,12 +18,6 @@ export default class WebService {
                     callback(liste) :
                     null;
             });
-        });
-    }
-
-    chargerMots() {
-        this.getAllMots((mots) => {
-            AsyncStorage.setItem("SFA:mots", JSON.stringify(mots)).done(console.log('thiuods'))
         });
     }
 

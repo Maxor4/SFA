@@ -24,7 +24,7 @@ export default class Main extends Component {
 
         this.state = {
             recherche: false,
-            collapsed: false,
+            collapsed: true,
             sections: true,
             mots: false,
             listeRecherche: [],
@@ -94,7 +94,7 @@ export default class Main extends Component {
     changerLangue(){
         let mots = this.state.listeMots;
 
-        ws.getTraductions(this.state.section, this.state.langue, (traductions) => {
+        ws.getTraductions(this.state.section.id, this.state.langue, (traductions) => {
             mots.forEach((mot) => {
                 mot.traduction = '';
                 traductions.forEach((traduction) => {
@@ -201,25 +201,32 @@ export default class Main extends Component {
             );
         } else {
             return (
-                <FlatList
-                    contentContainerStyle={styles.liste}
-                    data={this.state.mots ? this.state.listeMots : this.state.sousSections}
-                    extraData={this.state} //Permet de rerender à chaque textInput et eviter le textinput non modifiable
-                    renderItem={({item}) => this.renderItem(item)}
-                    keyExtractor={item => item.id.toString()}
-                />
+                <View style={styles.viewListeMots}>
+                    <Text style={styles.titreSection}>{this.state.section.libelle}</Text>
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                        <FlatList
+                            contentContainerStyle={styles.liste}
+                            data={this.state.mots ? this.state.listeMots : this.state.sousSections}
+                            extraData={this.state} //Permet de rerender à chaque textInput et eviter le textinput non modifiable
+                            renderItem={({item}) => this.renderItem(item)}
+                            keyExtractor={item => item.id.toString()}
+                        />
+                    </ScrollView>
+                </View>
             )
         }
     }
 
     renderItem(item) {
         if(this.state.mots){
+            let open = (item.id === this.state.openId && !this.state.collapsed);
+
             return (
                 <View style={styles.viewTrad}>
-                    <TouchableOpacity style={[styles.title, {marginBottom : item.id !== this.state.openId ? 28 : 8}]} onPress={this.setOpen.bind(this, item.id)}>
+                    <TouchableOpacity style={[styles.title, {marginBottom : open ? 8 : 28}]} onPress={this.setOpen.bind(this, item.id)}>
                         <Text style={styles.titleText}>{item.libelle}</Text>
                     </TouchableOpacity>
-                    {item.id === this.state.openId ?
+                    {open?
                         <View style={styles.traduction}>
                             <Text style={styles.traductionText}>{item.traduction}</Text>
                         </View> :
@@ -289,7 +296,7 @@ export default class Main extends Component {
                     });
 
                     this.setState({
-                        section: section.id,
+                        section: section,
                         sections: false,
                         mots: true,
                         listeMots: mots
@@ -359,5 +366,17 @@ const styles = StyleSheet.create({
     viewTrad: {
         alignItems: 'center',
         justifyContent: 'center'
+    },
+    titreSection: {
+        marginVertical : 40,
+        color: Couleurs.mainColors.orange,
+        fontSize : 26,
+        textAlign: 'center'
+    },
+    viewListeMots: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: Couleurs.lightGray
     }
 });
