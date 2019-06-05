@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {
     Dimensions,
     FlatList,
+    RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
@@ -9,6 +10,7 @@ import {
     View,
 } from "react-native";
 import Accordion from "react-native-collapsible/Accordion";
+import Icon from'react-native-vector-icons/Ionicons';
 
 import Couleurs from '../scripts/Couleurs';
 import WebService from '../scripts/WebService';
@@ -24,6 +26,7 @@ export default class Main extends Component {
 
         this.state = {
             recherche: false,
+            refreshing: false,
             collapsed: true,
             sections: true,
             mots: false,
@@ -49,15 +52,15 @@ export default class Main extends Component {
             switch (parts[0]) {
 
                 case "recherche":
-                    this.recherche(payload);
+                    this.setState({
+                        recherche: true
+                    }, () => {
+                        this.recherche(payload);
+                    });
                     break;
 
                 case "retourRecherche" :
-                    this.setState({
-                        recherche: false,
-                        sections: true
-                    });
-                    this.chargerListe();
+                    this.return();
                     break;
 
                 case "clearCache" :
@@ -77,7 +80,7 @@ export default class Main extends Component {
         } else {
             switch (event.id){
                 case "didAppear":
-                    this.chargerListe(true);
+                    this.chargerListe();
                     this.setState({
                         recherche: false,
                     });
@@ -115,7 +118,7 @@ export default class Main extends Component {
             productArray = [];
 
         if (typeof text === "undefined") {
-            this.chargerListe(true);
+            this.chargerListe();
             this.setState({
                 sections: true,
                 mots : false
@@ -165,26 +168,33 @@ export default class Main extends Component {
         }
     }
 
-    chargerListe(categories) {
-        if(categories){
-            ws.chargerTout((data) => {
-                this.setState({
-                    listeData: WebService.arrayFromHashes(data)
-                });
-            })
-        } else {
-            ws.getMots(this.state.categorie, (liste) =>{
-                this.setState({
-                    listeData: WebService.arrayFromHashes(liste)
-                });
-            })
-        }
+    chargerListe() {
+        ws.chargerTout((data) => {
+            this.setState({
+                listeData: WebService.arrayFromHashes(data)
+            });
+        })
+    }
+
+    return(){
+        this.setState({
+            recherche: false,
+            sections: true,
+            mots: false,
+            activeSections: []
+        });
     }
 
     render() {
         if(this.state.sections){
             return (
-                <ScrollView contentContainerStyle={styles.container}>
+                <ScrollView contentContainerStyle={styles.container} refreshControl={
+                    <RefreshControl
+                        refreshing={this.state.refreshing}
+                        onRefresh={this.chargerListe.bind(this)}
+                        enabled={true}
+                    />
+                }>
                     <Accordion
                         //Obligé de le mettre dans une scrollView, bug de la librairie, ne peut pas scroll dans l'accordion. cf. https://github.com/oblador/react-native-collapsible/issues/170
                         style={styles.container}
@@ -200,10 +210,21 @@ export default class Main extends Component {
                 </ScrollView>
             );
         } else {
+            let section = typeof this.state.section !== 'undefined' && this.state.section !== null;
+
             return (
-                <View style={styles.viewListeMots}>
-                    <Text style={styles.titreSection}>{this.state.section.libelle}</Text>
-                    <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.container}>
+                    {!this.state.recherche ?
+                        <TouchableOpacity onPress={this.return.bind(this)} style={{position: 'absolute', top : 10, left: 15}}>
+                            <Icon name={"ios-arrow-round-back"} style={styles.iconeBack}/>
+                        </TouchableOpacity>:
+                        null
+                    }
+                    {section ?
+                        <Text style={styles.titreSection}>{this.state.section.libelle}</Text> :
+                        null
+                    }
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={!section ? styles.container : null}>
                         <FlatList
                             contentContainerStyle={styles.liste}
                             data={this.state.mots ? this.state.listeMots : this.state.sousSections}
@@ -373,10 +394,8 @@ const styles = StyleSheet.create({
         fontSize : 26,
         textAlign: 'center'
     },
-    viewListeMots: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: Couleurs.lightGray
+    iconeBack: {
+        fontSize: 40,
+        color: Couleurs.noir,
     }
 });
