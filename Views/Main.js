@@ -1,9 +1,8 @@
 import React, {Component} from 'react';
 import {
-    AsyncStorage,
     Dimensions,
     FlatList,
-    Platform,
+    RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
@@ -11,6 +10,7 @@ import {
     View,
 } from "react-native";
 import Accordion from "react-native-collapsible/Accordion";
+import Icon from'react-native-vector-icons/Ionicons';
 
 import Couleurs from '../scripts/Couleurs';
 import WebService from '../scripts/WebService';
@@ -26,15 +26,14 @@ export default class Main extends Component {
 
         this.state = {
             recherche: false,
-            collapsed: false,
+            refreshing: false,
+            collapsed: true,
             sections: true,
             mots: false,
             listeRecherche: [],
             listeData: [],
             sousSections: [],
             listeMots: [],
-            resultat: true,
-            derniers: true,
             categorie : null,
             activeSections: [],
             section: null,
@@ -52,26 +51,16 @@ export default class Main extends Component {
 
             switch (parts[0]) {
 
-                case "rechercheProduit":
-                    this.recherche(payload);
+                case "recherche":
+                    this.setState({
+                        recherche: true
+                    }, () => {
+                        this.recherche(payload);
+                    });
                     break;
 
                 case "retourRecherche" :
-                    this.setState({
-                        recherche: false,
-                        resultat: true,
-                        derniers: true,
-                    });
-                    this.chargerListe();
-                    break;
-
-                case "recherche" :
-                    if (!this.state.recherche) {
-                        this.setState({
-                            recherche: true,
-                            derniers: true,
-                        });
-                    }
+                    this.return();
                     break;
 
                 case "clearCache" :
@@ -91,7 +80,7 @@ export default class Main extends Component {
         } else {
             switch (event.id){
                 case "didAppear":
-                    this.chargerListe(true);
+                    this.chargerListe();
                     this.setState({
                         recherche: false,
                     });
@@ -108,7 +97,7 @@ export default class Main extends Component {
     changerLangue(){
         let mots = this.state.listeMots;
 
-        ws.getTraductions(this.state.section, this.state.langue, (traductions) => {
+        ws.getTraductions(this.state.section.id, this.state.langue, (traductions) => {
             mots.forEach((mot) => {
                 mot.traduction = '';
                 traductions.forEach((traduction) => {
@@ -125,89 +114,87 @@ export default class Main extends Component {
     }
 
     recherche(text) {
-        let present = false;
+        let present = false,
+            productArray = [];
 
         if (typeof text === "undefined") {
             this.chargerListe();
             this.setState({
-                refreshing: false,
-                resultat: true,
-                derniers: true,
+                sections: true,
+                mots : false
             });
         } else {
-            this.setState({refreshing: true}, () => {
+            ws.getAllMots((mots) => {
+                if (text !== null && text.length > 0) {
+                    let productFilter = {},
+                        regex = text.toLowerCase();
 
-                AsyncStorage.getItem("listeProduits", (err, rechercheValue) => {
-                    const rechercheCache = JSON.parse(rechercheValue);
+                    if (mots !== null) {
+                        Object.keys(mots).forEach((key) => {
 
-                    if (text !== null && text.length > 0) {
-                        const productFilter = {},
-                            regex = text.toLowerCase();
-
-                        if (rechercheCache !== null) {
-                            Object.keys(rechercheCache).forEach((key) => {
-                                if (rechercheCache[key].libelle.toLowerCase().includes(regex) || rechercheCache[key].reference.toLowerCase().includes(regex)) {
-                                    productFilter[key] = rechercheCache[key];
-                                    present = true;
-                                }
-                            });
-                        }
-
-                        ws.rechercheProduit(text, (data) => {
-                            if (data.produits.length > 0) {
+                            if (mots[key].libelle.toLowerCase().includes(regex)) {
+                                productFilter[key] = mots[key];
                                 present = true;
-                                data.produits.forEach((produit) => {
-                                    productFilter[produit.id_product+"-"+produit.id_product_attribute] = produit;
-                                });
                             }
-
-                            this.setState({
-                                refreshing: false,
-                                resultat: present,
-                                derniers: !present,
-                                listeRecherche: present ?
-                                    productFilter :
-                                    []
-                            });
-                        }, () => {
-                            this.setState({
-                                refreshing: false,
-                                resultat: present,
-                                derniers: !present,
-                            });
-                        });
-                    } else {
-                        this.setState({
-                            refreshing: false,
-                            resultat: present,
-                            derniers: !present,
                         });
                     }
-                });
-            });
+
+                    productArray = WebService.arrayFromHashes(productFilter);
+
+                    productArray.forEach((mot) => {
+                        ws.getTraductionMot(mot.id, this.state.langue, (traductions) => {
+                            mot.traduction = '';
+                            traductions.forEach((traduction) => {
+                                if (traduction.mot.id === mot.id){
+                                    mot.traduction = traduction.libelle
+                                }
+                            });
+                        });
+                    });
+
+                    this.setState({
+                        sections: false,
+                        mots: true,
+                        listeMots: productArray
+                    })
+                } else {
+                    this.chargerListe();
+                    this.setState({
+                        sections: true,
+                        mots : false
+                    });
+                }
+            })
         }
     }
 
-    chargerListe(categories) {
-        if(categories){
-            ws.chargerTout((data) => {
-                this.setState({
-                    listeData: WebService.arrayFromHashes(data)
-                });
-            })
-        } else {
-            ws.getMots(this.state.categorie, (liste) =>{
-                this.setState({
-                    listeData: WebService.arrayFromHashes(liste)
-                });
-            })
-        }
+    chargerListe() {
+        ws.chargerTout((data) => {
+            this.setState({
+                listeData: WebService.arrayFromHashes(data)
+            });
+        })
+    }
+
+    return(){
+        this.setState({
+            recherche: false,
+            sections: true,
+            mots: false,
+            activeSections: []
+        });
     }
 
     render() {
         if(this.state.sections){
             return (
-                <ScrollView contentContainerStyle={styles.container}>
+                <ScrollView contentContainerStyle={styles.container} refreshControl={
+                    <RefreshControl
+                        refreshing={this.state.refreshing}
+                        onRefresh={this.chargerListe.bind(this)}
+                        enabled={true}
+                    />
+                }>
                     <Accordion
                         //Obligé de le mettre dans une scrollView, bug de la librairie, ne peut pas scroll dans l'accordion. cf. https://github.com/oblador/react-native-collapsible/issues/170
                         style={styles.container}
@@ -223,26 +210,44 @@ export default class Main extends Component {
                 </ScrollView>
             );
         } else {
+            let section = typeof this.state.section !== 'undefined' && this.state.section !== null;
+
             return (
-                <FlatList
-                    contentContainerStyle={styles.liste}
-                    data={this.state.mots ? this.state.listeMots : this.state.sousSections}
-                    extraData={this.state} //Permet de rerender à chaque textInput et eviter le textinput non modifiable
-                    renderItem={({item}) => this.renderItem(item)}
-                    keyExtractor={item => item.id.toString()}
-                />
+                <View style={styles.container}>
+                    {!this.state.recherche ?
+                        <TouchableOpacity onPress={this.return.bind(this)} style={{position: 'absolute', top : 10, left: 15}}>
+                            <Icon name={"ios-arrow-round-back"} style={styles.iconeBack}/>
+                        </TouchableOpacity>:
+                        null
+                    }
+                    {section ?
+                        <Text style={styles.titreSection}>{this.state.section.libelle}</Text> :
+                        null
+                    }
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={!section ? styles.container : null}>
+                        <FlatList
+                            contentContainerStyle={styles.liste}
+                            data={this.state.mots ? this.state.listeMots : this.state.sousSections}
+                            extraData={this.state} //Permet de rerender à chaque textInput et eviter le textinput non modifiable
+                            renderItem={({item}) => this.renderItem(item)}
+                            keyExtractor={item => item.id.toString()}
+                        />
+                    </ScrollView>
+                </View>
             )
         }
     }
 
     renderItem(item) {
         if(this.state.mots){
+            let open = (item.id === this.state.openId && !this.state.collapsed);
+
             return (
                 <View style={styles.viewTrad}>
-                    <TouchableOpacity style={[styles.title, {marginBottom : item.id !== this.state.openId ? 28 : 8}]} onPress={this.setOpen.bind(this, item.id)}>
+                    <TouchableOpacity style={[styles.title, {marginBottom : open ? 8 : 28}]} onPress={this.setOpen.bind(this, item.id)}>
                         <Text style={styles.titleText}>{item.libelle}</Text>
                     </TouchableOpacity>
-                    {item.id === this.state.openId ?
+                    {open?
                         <View style={styles.traduction}>
                             <Text style={styles.traductionText}>{item.traduction}</Text>
                         </View> :
@@ -312,7 +317,7 @@ export default class Main extends Component {
                     });
 
                     this.setState({
-                        section: section.id,
+                        section: section,
                         sections: false,
                         mots: true,
                         listeMots: mots
@@ -382,5 +387,15 @@ const styles = StyleSheet.create({
     viewTrad: {
         alignItems: 'center',
         justifyContent: 'center'
+    },
+    titreSection: {
+        marginVertical : 40,
+        color: Couleurs.mainColors.orange,
+        fontSize : 26,
+        textAlign: 'center'
+    },
+    iconeBack: {
+        fontSize: 40,
+        color: Couleurs.noir,
     }
 });

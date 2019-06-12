@@ -9,13 +9,9 @@ export default class WebService {
         this.navigator = null;
 
         this.serveurSymfony = Config.serveur;
-
-        //this.chargerTout();
     }
 
     chargerTout(callback) {
-        let data = [];
-
         this.getCategories((data) => {
             this.chargerSections(data, (liste) => {
                 return typeof callback === "function" ?
@@ -23,19 +19,6 @@ export default class WebService {
                     null;
             });
         });
-    }
-
-    chargerMots(mots, categories) {
-        let temp = categories;
-
-        mots.forEach((mot) => {
-            temp[mots[0].section.idMere].filles[mots[0].section.id].mots[mot.id] = {
-                libelle: mot.libelle,
-                id: mot.id
-            };
-        });
-
-        return temp;
     }
 
     chargerSections(sections, callback) {
@@ -163,6 +146,10 @@ export default class WebService {
         this.request(this.serveurSymfony + "/lister/mot/section="+id_section, "GET", null, callback, fallback);
     }
 
+    getAllMots(callback, fallback) {
+        this.request(this.serveurSymfony + "/lister/mot", "GET", null, callback, fallback);
+    }
+
     getCategories(callback, fallback) {
         this.request(this.serveurSymfony + "/lister/section", "GET", null, callback, fallback);
     }
@@ -175,7 +162,7 @@ export default class WebService {
         this.request(this.serveurSymfony + "/lister/traduction/section="+id_section+"/langue="+id_langue, "GET", null, callback, fallback);
     }
 
-    getTraductionsMot(id_mot, id_langue, callback, fallback) {
+    getTraductionMot(id_mot, id_langue, callback, fallback) {
         this.request(this.serveurSymfony + "/lister/traduction/mot="+id_mot+"/langue="+id_langue, "GET", null, callback, fallback);
     }
 }
