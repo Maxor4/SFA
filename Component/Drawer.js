@@ -7,7 +7,8 @@
 import React, { Component} from 'react';
 import {
     Dimensions,
-    FlatList, Platform,
+    FlatList,
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -71,7 +72,7 @@ export default class Drawer extends Component {
         super(props);
 
         this.state = {
-            langue: 25,
+            langue: 32,
             langues : []
         };
 

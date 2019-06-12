@@ -25,7 +25,7 @@ var Couleurs = {
     rouge: '#990000',
     bleuClair: '#00aeef',
     noir: '#000000',
-    lightGray: '#EAEAEA',
+    lightGray: '#dddde1',
     darkGray: '#555555',
 
     primaire: "#00aeef",
